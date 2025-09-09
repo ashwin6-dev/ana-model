@@ -9,6 +9,9 @@ class EEGDataset:
 
     def get_dataset(self):
         return self.data
+    
+    def save(self, path):
+        self.data.to_csv(path, index=False)
 
 class EEGDatasetCollection:
     def __init__(self, datasets):

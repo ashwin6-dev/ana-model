@@ -1,4 +1,5 @@
-from .pipeline import Processor
+from ..pipeline import Processor
+from ..dataset import EEGDataset
 from scipy.fft import rfft, rfftfreq
 import numpy as np
 import pandas as pd
@@ -15,6 +16,10 @@ class ComputeBandPowers(Processor):
         'high_gamma': (60, 100)
     }
 
+    def __init__(self, target_interval=1.0):
+        self.target_interval = target_interval
+        self.input_data = None
+
     def execute(self, input_data):
         self.input_data = input_data
         df = input_data.get_dataset()
@@ -23,7 +28,7 @@ class ComputeBandPowers(Processor):
 
     def compute_band_power(self, signals: pd.DataFrame) -> pd.DataFrame:
         sample_interval = self.input_data.sample_interval
-        samples_per_second = int(round(1 / sample_interval))
+        samples_per_second = int(int(round(1 / sample_interval)) * self.target_interval)
 
         all_band_powers = []
 
@@ -44,7 +49,7 @@ class ComputeBandPowers(Processor):
             band_avgs = {band: band_sums[band] / n_signals for band in self.BANDS}
             all_band_powers.append(band_avgs)
 
-        return pd.DataFrame(all_band_powers)
+        return EEGDataset(pd.DataFrame(all_band_powers), sample_interval=1)
 
     def compute_signal_bands(self, signal):
         fs = 1 / self.input_data.sample_interval
